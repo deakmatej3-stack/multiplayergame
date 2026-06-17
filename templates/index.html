@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Piškvorky</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h1>Multiplayer Piškvorky</h1>
+
+<h2 id="player">Pripájanie...</h2>
+<h3 id="turn"></h3>
+
+<div id="board"></div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+const socket = io();
+
+let symbol = "";
+
+const board = document.getElementById("board");
+
+for(let i=0;i<9;i++){
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+
+    cell.onclick = () => {
+        socket.emit("move", {
+            index: i,
+            symbol: symbol
+        });
+    };
+
+    board.appendChild(cell);
+}
+
+socket.on("player", data=>{
+    symbol = data.symbol;
+    document.getElementById("player").innerText =
+        "Si hráč " + symbol;
+});
+
+socket.on("board", data=>{
+    const cells = document.querySelectorAll(".cell");
+
+    data.board.forEach((v,i)=>{
+        cells[i].innerText = v;
+    });
+
+    document.getElementById("turn").innerText =
+        "Na ťahu: " + data.turn;
+
+    if(data.winner){
+        if(data.winner === "DRAW"){
+            alert("Remíza!");
+        }else{
+            alert("Vyhral " + data.winner);
+        }
+    }
+});
+
+socket.on("full", ()=>{
+    alert("Server je plný");
+});
+</script>
+
+</body>
+</html>
